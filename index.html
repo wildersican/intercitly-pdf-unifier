@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERCITLY</title>
+    <!-- Importamos la librería pdf-lib desde CDN -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        :root {
+            --primary: #ffc72c;
+            --primary-hover: #e5b327;
+            --bg: #f4f5f7;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-light: #555555;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            background-color: var(--primary);
+            color: #1a1a1a;
+            padding: 1rem 2rem;
+            font-weight: 800;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+
+        .sub-header {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 0.75rem 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bottom-footer {
+            background-color: #1a1a1a;
+            color: #888888;
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.8rem;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 650px;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            color: #0f172a;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Zona de Arrastre (Dropzone) */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fdfdfd;
+        }
+
+        .dropzone.dragover {
+            border-color: var(--primary);
+            background: #eef2ff;
+        }
+
+        .dropzone svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .dropzone span {
+            display: block;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .dropzone small {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Lista de Archivos */
+        .file-section {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .file-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .file-list {
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            divide-y: 1px solid var(--border);
+        }
+
+        .file-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-order {
+            background: var(--primary);
+            color: #1a1a1a;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .file-name {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Botón de Acción */
+        .btn {
+            width: 100%;
+            padding: 0.85rem;
+            margin-top: 1.5rem;
+            background: var(--primary);
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* Indicador de Estado */
+        #status {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .success { color: #16a34a; }
+        .processing { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <!-- Header Amarillo -->
+    <header class="top-header">
+        <div>INTERCITLY <span style="font-weight:400; font-size:1rem;">1.0</span></div>
+        <div style="font-size:0.9rem; font-weight:600; display:flex; align-items:center; gap:5px; cursor:pointer;">
+            <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            Contact Us
+        </div>
+    </header>
+
+    <!-- Sub-header Negro -->
+    <nav class="sub-header">
+        <span>PDF UNIFIER</span>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <div class="container">
+            <h1>PDF Document Unifier</h1>
+    <p class="subtitle">Files are automatically sorted alphabetically and numerically</p>
+
+    <!-- Zona Drag & Drop -->
+    <div class="dropzone" id="dropzone">
+        <svg viewBox="0 0 24 24"><path d="M19 13v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5a1 1 0 0 1 2 0v5h10v-5a1 1 0 0 1 2 0zM12 3a1 1 0 0 1 1 1v9.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L11 13.586V4a1 1 0 0 1 1-1z"/></svg>
+        <span>Click here or drag and drop your PDF files</span>
+        <small>Supports multiple files simultaneously</small>
+        <input type="file" id="fileInput" multiple accept=".pdf">
+    </div>
+
+    <!-- Lista de orden previsualizado -->
+    <div class="file-section" id="fileSection">
+        <h3>Merge Order Preview</h3>
+        <ul class="file-list" id="fileList"></ul>
+    </div>
+
+    <!-- Botón y Estado -->
+    <button class="btn" id="mergeBtn" disabled>Merge and Download PDF</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    let archivosSeleccionados = [];
+    let nombreCarpetaBase = "";
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileSection = document.getElementById('fileSection');
+    const fileList = document.getElementById('fileList');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const statusDiv = document.getElementById('status');
+
+    // Eventos de la interfaz (Drag & Drop + Clic)
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        
+        mostrarEstado("Scanning folder... Please wait.", "processing");
+
+        try {
+            if (!e.dataTransfer.items) {
+                procesarArchivos(e.dataTransfer.files);
+                return;
+            }
+
+            // 1. Extraer los items de forma síncrona
+            const items = e.dataTransfer.items;
+            const entries = [];
+            let folderName = "";
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file') {
+                    const entry = items[i].webkitGetAsEntry ? items[i].webkitGetAsEntry() : null;
+                    if (entry) {
+                        entries.push(entry);
+                        if (entry.isDirectory && !folderName) {
+                            folderName = entry.name;
+                        }
+                    } else {
+                        const file = items[i].getAsFile();
+                        if (file) entries.push(file);
+                    }
+                }
+            }
+            
+            if (folderName) {
+                nombreCarpetaBase = folderName;
+            }
+
+            let allFiles = [];
+
+            // 2. Función para leer archivos y directorios de forma recursiva
+            async function getFilesFromEntry(entry) {
+                if (entry instanceof File) {
+                    return [entry];
+                } else if (entry.isFile) {
+                    return new Promise(resolve => {
+                        entry.file(file => resolve([file]), err => {
+                            console.error("Error getting file:", err);
+                            resolve([]);
+                        });
+                    });
+                } else if (entry.isDirectory) {
+                    const dirReader = entry.createReader();
+                    return new Promise(resolve => {
+                        let allEntries = [];
+                        function readEntries() {
+                            dirReader.readEntries(async dirEntries => {
+                                if (dirEntries.length === 0) {
+                                    let dirFiles = [];
+                                    for (let subEntry of allEntries) {
+                                        const subFiles = await getFilesFromEntry(subEntry);
+                                        dirFiles = dirFiles.concat(subFiles);
+                                    }
+                                    resolve(dirFiles);
+                                } else {
+                                    // dirReader.readEntries devuelve un Array-like object (NodeList) en algunos navegadores, mejor usar Array.from
+                                    allEntries = allEntries.concat(Array.from(dirEntries));
+                                    readEntries();
+                                }
+                            }, err => {
+                                console.error("Error reading directory:", err);
+                                resolve([]);
+                            });
+                        }
+                        readEntries();
+                    });
+                }
+                return [];
+            }
+
+            // 3. Procesar todo
+            for (let entry of entries) {
+                const extractedFiles = await getFilesFromEntry(entry);
+                allFiles = allFiles.concat(extractedFiles);
+            }
+            
+            procesarArchivos(allFiles);
+
+        } catch (error) {
+            console.error("Fatal error during scan:", error);
+            mostrarEstado("Error scanning folder: " + error.message, "processing");
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        procesarArchivos(e.target.files);
+    });
+
+    // 1. Filtrar y Ordenar Archivos Automáticamente
+    function procesarArchivos(files) {
+        if (!files || files.length === 0) {
+            mostrarEstado("No files found to process.", "processing");
+            return;
+        }
+
+        // Filtramos para asegurarnos de que solo entren archivos PDF
+        const pdfFiles = Array.from(files).filter(file => {
+            return (file.type && file.type === 'application/pdf') || (file.name && file.name.toLowerCase().endsWith('.pdf'));
+        });
+
+        if (pdfFiles.length === 0) {
+            mostrarEstado("No PDFs found in this folder.", "processing");
+            return;
+        }
+
+        // AGREGAR AL ARRAY EXISTENTE
+        archivosSeleccionados = [...archivosSeleccionados, ...pdfFiles];
+
+        // EL SECRETO DEL ORDENAMIENTO: localeCompare con { numeric: true }
+        archivosSeleccionados.sort((a, b) => 
+            a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+        );
+
+        renderizarLista();
+    }
+
+    // 2. Mostrar la lista ordenada en la interfaz
+    function renderizarLista() {
+        fileList.innerHTML = '';
+        
+        if (archivosSeleccionados.length > 0) {
+            fileSection.style.display = 'block';
+            mergeBtn.disabled = archivosSeleccionados.length < 2; // Requiere al menos 2 para unir
+            statusDiv.innerHTML = '';
+        }
+
+        archivosSeleccionados.forEach((archivo, index) => {
+            const li = document.createElement('li');
+            li.className = 'file-item';
+            li.innerHTML = `
+                <div style="display:flex; align-items:center; overflow:hidden;">
+                    <span class="file-order">${index + 1}</span>
+                    <span class="file-name" title="${archivo.name}">${archivo.name}</span>
+                </div>
+            `;
+            fileList.appendChild(li);
+        });
+    }
+
+    function mostrarEstado(texto, clase) {
+        statusDiv.textContent = texto;
+        statusDiv.className = clase;
+    }
+
+    // 3. Proceso de Unión usando pdf-lib
+    mergeBtn.addEventListener('click', async () => {
+        try {
+            mergeBtn.disabled = true;
+            mostrarEstado("Processing and merging documents... Please wait.", "processing");
+
+            const { PDFDocument } = PDFLib;
+            const pdfFinal = await PDFDocument.create();
+
+            for (const archivo of archivosSeleccionados) {
+                const arrayBuffer = await archivo.arrayBuffer();
+                const pdfTemporal = await PDFDocument.load(arrayBuffer);
+                
+                // Copiamos todas las páginas del archivo actual
+                const paginasCopiadas = await pdfFinal.copyPages(pdfTemporal, pdfTemporal.getPageIndices());
+                
+                // Add cada página al documento final
+                paginasCopiadas.forEach((pagina) => pdfFinal.addPage(pagina));
+            }
+
+            // Exportar el documento consolidado en un array de bytes
+            const pdfBytes = await pdfFinal.save();
+
+            // Crear el enlace de descarga automáticamente
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            if (nombreCarpetaBase) {
+                link.download = `${nombreCarpetaBase} complete.pdf`;
+            } else {
+                link.download = `Consolidated_Documents_${new Date().toISOString().slice(0,10)}.pdf`;
+            }
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            mostrarEstado("PDFs merged successfully! Download has started.", "success");
+            mergeBtn.disabled = false;
+
+        } catch (error) {
+            console.error("Error merging PDFs:", error);
+            mostrarEstado("An error occurred while processing the files. Check the console.", "");
+            mergeBtn.disabled = false;
+        }
+    });
+</script>
+    </main>
+
+    <!-- Footer Negro -->
+    <footer class="bottom-footer">
+        &copy; 2026 INTERCITLY | By WilderSican
+    </footer>
+</body>
+</html>
